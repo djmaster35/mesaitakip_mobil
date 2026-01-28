@@ -152,6 +152,43 @@ function logout() {
     showView('auth');
 }
 
+function googleLogin() {
+    if (typeof Android !== 'undefined') {
+        Android.googleLogin();
+    } else {
+        alert("Android arayüzü bulunamadı.");
+    }
+}
+
+window.onGoogleLoginSuccess = function(email, displayName, googleId) {
+    // Google ile giriş yapan kullanıcıyı yerel DB'de kontrol et veya oluştur
+    let users = DB.query("SELECT * FROM kullanicilar WHERE username = ?", [email]);
+    let userId;
+
+    if (users.length === 0) {
+        userId = DB.execute("INSERT INTO kullanicilar (adsoyad, username, password, is_admin) VALUES (?, ?, ?, 0)",
+            [displayName, email, googleId]);
+        currentUser = { id: userId, adsoyad: displayName, username: email, is_admin: 0 };
+    } else {
+        const user = users[0];
+        if (user.is_banned) {
+            setMessage("Bu hesap engellenmiştir.");
+            return;
+        }
+        userId = user.id;
+        currentUser = user;
+    }
+
+    localStorage.setItem('userId', userId);
+    showView('main');
+    loadMain();
+    setMessage("Google ile giriş başarılı!", "success");
+};
+
+window.onGoogleLoginFailure = function(statusCode) {
+    setMessage("Google girişi başarısız. Hata kodu: " + statusCode);
+};
+
 // View Management
 function showView(viewName) {
     document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
