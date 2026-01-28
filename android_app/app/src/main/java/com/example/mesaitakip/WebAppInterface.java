@@ -126,6 +126,7 @@ public class WebAppInterface {
     public void googleLogin() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestProfile()
                 .requestScopes(new Scope(DriveScopes.DRIVE_APPDATA))
                 .build();
         GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(mContext, gso);

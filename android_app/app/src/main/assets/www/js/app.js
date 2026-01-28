@@ -186,7 +186,11 @@ window.onGoogleLoginSuccess = function(email, displayName, googleId) {
 };
 
 window.onGoogleLoginFailure = function(statusCode) {
-    setMessage("Google girişi başarısız. Hata kodu: " + statusCode);
+    let msg = "Google girişi başarısız. Hata kodu: " + statusCode;
+    if (statusCode === 10) {
+        msg += " (Yapılandırma hatası. SHA-1 veya Test User ayarlarını kontrol edin. Bkz: GOOGLE_SETUP.md)";
+    }
+    setMessage(msg, "danger");
 };
 
 // View Management
