@@ -160,6 +160,15 @@ function googleLogin() {
     }
 }
 
+function showSha1() {
+    if (typeof Android !== 'undefined') {
+        const sha1 = Android.getAppSha1();
+        prompt("SHA-1 Sertifika Parmak İzi (Kopyalamak için metni seçip kopyalayın):", sha1);
+    } else {
+        alert("Android arayüzü bulunamadı.");
+    }
+}
+
 window.onGoogleLoginSuccess = function(email, displayName, googleId) {
     // Google ile giriş yapan kullanıcıyı yerel DB'de kontrol et veya oluştur
     let users = DB.query("SELECT * FROM kullanicilar WHERE username = ?", [email]);

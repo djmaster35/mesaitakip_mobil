@@ -24,18 +24,14 @@ Uygulamanın Google özelliklerinin (Giriş ve Drive Yedekleme) çalışması i�
 4. **Package name**: `com.example.mesaitakip` (Tam olarak bu olmalı).
 5. **SHA-1 certificate fingerprint**:
    - Bu değerin yanlış olması **Hata 10**'un en yaygın sebebidir.
-   - Android Studio'da sağ taraftaki **Gradle** sekmesini açın.
-   - `app > Tasks > android > signingReport` yolunu izleyip çalıştırın.
-   - Alt kısmdaki konsolda **SHA1** değerini göreceksiniz. Bunu kopyalayın.
-   - Alternatif (Terminal):
-     - Windows: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android -keypass android`
-     - Mac/Linux: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
+   - En garantili yöntem: Uygulamayı cihazınızda açın, giriş ekranının altındaki **"Yapılandırma Bilgisi (SHA-1)"** linkine tıklayın.
+   - Orada görünen kodu kopyalayıp Google Cloud Console'daki ilgili alana yapıştırın.
 6. Kaydedin.
 
 ## 4. Hata Kodu 10 Çözüm Özeti
 Eğer hala Hata 10 alıyorsanız:
 1. Google Cloud Console'daki **Package Name**'in `com.example.mesaitakip` olduğundan emin olun.
-2. **SHA-1** değerini `signingReport` çıktısından alarak güncelleyin (Bazen bilgisayarınızdaki debug key beklediğinizden farklı olabilir).
+2. **SHA-1** değerini uygulamanın içindeki "Yapılandırma Bilgisi" kısmından alarak Console'da güncelleyin.
 3. **OAuth Consent Screen** ayarlarında **Test Users** kısmına giriş yaptığınız e-postayı eklediğinizden emin olun.
 4. Değişikliklerin Google sunucularında aktif olması için 5-10 dakika bekleyin.
 

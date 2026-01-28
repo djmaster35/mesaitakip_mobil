@@ -91,6 +91,9 @@
                                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Google ile Giriş Yap
                             </button>
                         </form>
+                        <div class="text-center mt-3">
+                            <a href="#" onclick="showSha1()" class="text-muted small">Yapılandırma Bilgisi (SHA-1)</a>
+                        </div>
                     </div>
 
                     <div class="tab-pane fade" id="registerTab">
@@ -321,6 +324,7 @@
         <div class="d-grid gap-2">
             <button class="btn btn-primary" onclick="Android.backupToCloud()"><i class="fas fa-cloud-upload-alt"></i> Buluta Yedekle</button>
             <button class="btn btn-success" onclick="Android.restoreFromCloud()"><i class="fas fa-cloud-download-alt"></i> Buluttan Geri Yükle</button>
+            <button class="btn btn-link btn-sm text-muted" onclick="showSha1()">Uygulama SHA-1 bilgisini göster</button>
         </div>
     </div>
 </div></div></div>

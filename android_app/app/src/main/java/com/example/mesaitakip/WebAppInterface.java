@@ -1,8 +1,12 @@
 package com.example.mesaitakip;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -13,6 +17,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
 import com.google.api.services.drive.DriveScopes;
+import java.security.MessageDigest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -154,6 +159,37 @@ public class WebAppInterface {
     @JavascriptInterface
     public void restoreFromCloud() {
         new Thread(new RestoreTask(mContext, mWebView, dbHelper)).start();
+    }
+
+    @JavascriptInterface
+    public String getAppSha1() {
+        try {
+            Signature[] signatures;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                PackageInfo info = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+                signatures = info.signingInfo.getApkContentsSigners();
+            } else {
+                PackageInfo info = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SIGNATURES);
+                signatures = info.signatures;
+            }
+
+            for (Signature signature : signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA1");
+                md.update(signature.toByteArray());
+                byte[] digest = md.digest();
+                StringBuilder hexString = new StringBuilder();
+                for (int i = 0; i < digest.length; i++) {
+                    String append = Integer.toHexString(0xFF & digest[i]);
+                    if (append.length() == 1) hexString.append("0");
+                    hexString.append(append.toUpperCase());
+                    if (i < digest.length - 1) hexString.append(":");
+                }
+                return hexString.toString();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting SHA1", e);
+        }
+        return "Not found";
     }
 
     private void sendToJs(String js) {
