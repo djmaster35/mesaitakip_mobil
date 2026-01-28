@@ -150,108 +150,101 @@ public class WebAppInterface {
         final String email = account.getEmail();
         final String displayName = account.getDisplayName();
         final String id = account.getId();
-
-        mWebView.post(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.loadUrl("javascript:onGoogleLoginSuccess('" + email + "', '" + displayName + "', '" + id + "')");
-            }
-        });
+        sendToJs("onGoogleLoginSuccess('" + email + "', '" + displayName + "', '" + id + "')");
     }
 
     public void onGoogleSignInFailure(int statusCode) {
-        mWebView.post(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.loadUrl("javascript:onGoogleLoginFailure(" + statusCode + ")");
-            }
-        });
+        sendToJs("onGoogleLoginFailure(" + statusCode + ")");
     }
 
     // --- Google Drive Backup ---
 
+    private class BackupTask implements Runnable {
+        @Override
+        public void run() {
+            try {
+                GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(mContext);
+                if (account == null) {
+                    sendToJs("alert('Lütfen önce Google ile giriş yapın.')");
+                    return;
+                }
+
+                Drive googleDriveService = getDriveService(account);
+                java.io.File dbFile = mContext.getDatabasePath("mesaitakip.db");
+
+                // Drive'da mevcut dosyayı ara
+                FileList result = googleDriveService.files().list()
+                        .setSpaces("appDataFolder")
+                        .setQ("name = 'mesaitakip_backup.db'")
+                        .execute();
+
+                File fileMetadata = new File();
+                fileMetadata.setName("mesaitakip_backup.db");
+                FileContent mediaContent = new FileContent("application/x-sqlite3", dbFile);
+
+                if (result.getFiles().isEmpty()) {
+                    fileMetadata.setParents(Collections.singletonList("appDataFolder"));
+                    googleDriveService.files().create(fileMetadata, mediaContent).execute();
+                } else {
+                    String fileId = result.getFiles().get(0).getId();
+                    googleDriveService.files().update(fileId, null, mediaContent).execute();
+                }
+
+                sendToJs("alert('Yedekleme başarıyla tamamlandı!')");
+            } catch (Exception e) {
+                Log.e(TAG, "Backup failed", e);
+                sendToJs("alert('Yedekleme hatası: " + e.getMessage() + "')");
+            }
+        }
+    }
+
     @JavascriptInterface
     public void backupToCloud() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(mContext);
-                    if (account == null) {
-                        sendToJs("alert('Lütfen önce Google ile giriş yapın.')");
-                        return;
-                    }
+        new Thread(new BackupTask()).start();
+    }
 
-                    Drive googleDriveService = getDriveService(account);
-                    java.io.File dbFile = mContext.getDatabasePath("mesaitakip.db");
-
-                    // Drive'da mevcut dosyayı ara
-                    FileList result = googleDriveService.files().list()
-                            .setSpaces("appDataFolder")
-                            .setQ("name = 'mesaitakip_backup.db'")
-                            .execute();
-
-                    File fileMetadata = new File();
-                    fileMetadata.setName("mesaitakip_backup.db");
-                    FileContent mediaContent = new FileContent("application/x-sqlite3", dbFile);
-
-                    if (result.getFiles().isEmpty()) {
-                        fileMetadata.setParents(Collections.singletonList("appDataFolder"));
-                        googleDriveService.files().create(fileMetadata, mediaContent).execute();
-                    } else {
-                        String fileId = result.getFiles().get(0).getId();
-                        googleDriveService.files().update(fileId, null, mediaContent).execute();
-                    }
-
-                    sendToJs("alert('Yedekleme başarıyla tamamlandı!')");
-                } catch (Exception e) {
-                    Log.e(TAG, "Backup failed", e);
-                    sendToJs("alert('Yedekleme hatası: " + e.getMessage() + "')");
+    private class RestoreTask implements Runnable {
+        @Override
+        public void run() {
+            try {
+                GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(mContext);
+                if (account == null) {
+                    sendToJs("alert('Lütfen önce Google ile giriş yapın.')");
+                    return;
                 }
+
+                Drive googleDriveService = getDriveService(account);
+                FileList result = googleDriveService.files().list()
+                        .setSpaces("appDataFolder")
+                        .setQ("name = 'mesaitakip_backup.db'")
+                        .execute();
+
+                if (result.getFiles().isEmpty()) {
+                    sendToJs("alert('Bulutta yedek bulunamadı.')");
+                    return;
+                }
+
+                String fileId = result.getFiles().get(0).getId();
+                java.io.File dbFile = mContext.getDatabasePath("mesaitakip.db");
+
+                // Veritabanını kapat
+                dbHelper.close();
+
+                try (OutputStream outputStream = new FileOutputStream(dbFile)) {
+                    googleDriveService.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                }
+
+                sendToJs("alert('Geri yükleme tamamlandı. Uygulama yenileniyor.'); location.reload();");
+            } catch (Exception e) {
+                Log.e(TAG, "Restore failed", e);
+                sendToJs("alert('Geri yükleme hatası: " + e.getMessage() + "')");
             }
-        }).start();
+        }
     }
 
     @JavascriptInterface
     public void restoreFromCloud() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(mContext);
-                    if (account == null) {
-                        sendToJs("alert('Lütfen önce Google ile giriş yapın.')");
-                        return;
-                    }
-
-                    Drive googleDriveService = getDriveService(account);
-                    FileList result = googleDriveService.files().list()
-                            .setSpaces("appDataFolder")
-                            .setQ("name = 'mesaitakip_backup.db'")
-                            .execute();
-
-                    if (result.getFiles().isEmpty()) {
-                        sendToJs("alert('Bulutta yedek bulunamadı.')");
-                        return;
-                    }
-
-                    String fileId = result.getFiles().get(0).getId();
-                    java.io.File dbFile = mContext.getDatabasePath("mesaitakip.db");
-
-                    // Veritabanını kapat
-                    dbHelper.close();
-
-                    try (OutputStream outputStream = new FileOutputStream(dbFile)) {
-                        googleDriveService.files().get(fileId).executeMediaAndDownloadTo(outputStream);
-                    }
-
-                    sendToJs("alert('Geri yükleme tamamlandı. Uygulama yenileniyor.'); location.reload();");
-                } catch (Exception e) {
-                    Log.e(TAG, "Restore failed", e);
-                    sendToJs("alert('Geri yükleme hatası: " + e.getMessage() + "')");
-                }
-            }
-        }).start();
+        new Thread(new RestoreTask()).start();
     }
 
     private Drive getDriveService(GoogleSignInAccount account) {
@@ -267,12 +260,16 @@ public class WebAppInterface {
                 .build();
     }
 
+    private class JsLoader implements Runnable {
+        private String js;
+        JsLoader(String js) { this.js = js; }
+        @Override
+        public void run() {
+            mWebView.loadUrl("javascript:" + js);
+        }
+    }
+
     private void sendToJs(final String js) {
-        mWebView.post(new Runnable() {
-            @Override
-            public void run() {
-                mWebView.loadUrl("javascript:" + js);
-            }
-        });
+        mWebView.post(new JsLoader(js));
     }
 }
