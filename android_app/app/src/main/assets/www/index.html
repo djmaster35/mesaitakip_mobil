@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesai Takip</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #4361ee; --success: #10b981; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding-bottom: 60px; }
+        .main-container { max-width: 900px; margin: 0 auto; padding: 15px; }
+        .card { border: none; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card-header { background: var(--primary); color: white; font-weight: 600; padding: 15px 20px; border: none; border-radius: 16px 16px 0 0 !important; }
+        .btn { border-radius: 10px; padding: 10px 20px; font-weight: 500; }
+        .btn-primary { background: var(--primary); border: none; }
+        .btn-success { background: var(--success); border: none; }
+        .day-btn { padding: 12px 8px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid #dee2e6; background: white; min-width: 70px; flex: 1; transition: all 0.2s; }
+        .day-btn:hover { border-color: var(--primary); background: #f0f4ff; }
+        .day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .day-btn.filled { background: #e8f5e9; border-color: #4caf50; }
+        .day-btn.weekend { background: #fff3e0; border-color: #ff9800; }
+        .day-btn .day-name { font-weight: 700; font-size: 0.85rem; }
+        .day-btn .day-date { font-size: 0.75rem; opacity: 0.8; }
+        .top-nav { background: rgba(255,255,255,0.95); border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .summary-box { background: white; border-radius: 12px; padding: 15px; text-align: center; }
+        .summary-box .number { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .summary-box .label { font-size: 0.8rem; color: #6c757d; }
+        .row-pazar { background: #fff8e1 !important; }
+        .row-tatil { background: #e3f2fd !important; }
+        .form-control, .form-select { border-radius: 10px; padding: 12px 15px; border: 2px solid #e9ecef; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,97,238,0.1); }
+        footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); color: white; text-align: center; padding: 10px; font-size: 0.8rem; }
+        .steps { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .step { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,255,255,0.3); border-radius: 20px; font-size: 0.85rem; color: white; }
+        .step.active { background: white; color: var(--primary); font-weight: 600; }
+        @media (max-width: 768px) { .day-btn { min-width: 45px; padding: 8px 4px; } .day-btn .day-name { font-size: 0.7rem; } .day-btn .day-date { font-size: 0.6rem; } }
+
+        /* App specific hide/show */
+        .app-view { display: none; }
+        .app-view.active { display: block; }
+    </style>
+</head>
+<body>
+<div class="main-container">
+
+    <div id="alertContainer"></div>
+
+    <!-- GİRİŞ / KAYIT EKRANI -->
+    <div id="view-auth" class="app-view">
+        <div class="text-center text-white mb-4">
+            <h1><i class="fas fa-clock"></i> Mesai Takip</h1>
+            <p>Mesai kayıtlarınızı kolayca yönetin</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <ul class="nav nav-pills nav-justified mb-4">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#loginTab">
+                            <i class="fas fa-sign-in-alt"></i> Giriş
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#registerTab">
+                            <i class="fas fa-user-plus"></i> Kayıt
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="loginTab">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-user"></i> Kullanıcı Adı</label>
+                                <input type="text" id="loginUsername" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-lock"></i> Şifre</label>
+                                <input type="password" id="loginPassword" class="form-control" required>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" id="loginRemember" class="form-check-input">
+                                <label class="form-check-label" for="loginRemember">Beni hatırla</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i class="fas fa-sign-in-alt"></i> Giriş Yap
+                            </button>
+                            <button type="button" class="btn btn-outline-dark w-100" onclick="googleLogin()">
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" class="me-2"> Google ile Giriş Yap
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="registerTab">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-id-card"></i> Ad Soyad</label>
+                                <input type="text" id="regAdSoyad" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-user"></i> Kullanıcı Adı</label>
+                                <input type="text" id="regUsername" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-lock"></i> Şifre</label>
+                                <input type="password" id="regPassword" class="form-control" required>
+                                <small class="text-muted">En az 6 karakter</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-lock"></i> Şifre Tekrar</label>
+                                <input type="password" id="regConfirmPassword" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-user-plus"></i> Kayıt Ol
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANA EKRAN -->
+    <div id="view-main" class="app-view">
+        <div class="top-nav" id="mainNav">
+            <!-- Dinamik doldurulacak -->
+        </div>
+
+        <div class="steps">
+            <div class="step" id="step1"><span>1</span> Hafta Seç</div>
+            <div class="step" id="step2"><span>2</span> Gün Seç</div>
+            <div class="step" id="step3"><span>3</span> Veri Gir</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-calendar-week"></i> Hafta Seçimi</span>
+                <button class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#newWeekForm"><i class="fas fa-plus"></i> Yeni</button>
+            </div>
+            <div class="card-body">
+                <div class="collapse mb-3" id="newWeekForm">
+                    <div class="p-3 bg-light rounded">
+                        <form id="createWeekForm" class="row g-2 align-items-end">
+                            <div class="col-8"><label>Başlangıç Tarihi</label><input type="date" id="newWeekStart" class="form-control" required></div>
+                            <div class="col-4"><button type="submit" class="btn btn-success w-100"><i class="fas fa-check"></i></button></div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <select id="yearSelect" class="form-select">
+                            <!-- Dinamik -->
+                        </select>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="dropdown" id="weekDropdownContainer">
+                            <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" id="selectedWeekBtn">
+                                Hafta seçin...
+                            </button>
+                            <ul class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto;" id="weekList">
+                                <!-- Dinamik -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mesaiEntrySection" style="display:none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-edit"></i> Mesai Girişi</span>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-cog"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editWeekModal"><i class="fas fa-edit"></i> Düzenle</button></li>
+                            <li><button type="button" id="deleteWeekBtn" class="dropdown-item text-danger"><i class="fas fa-trash"></i> Sil</button></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <label class="form-label mb-2"><i class="fas fa-hand-pointer"></i> Gün seçin:</label>
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="daysContainer">
+                        <!-- Dinamik -->
+                    </div>
+
+                    <form id="recordForm" class="row g-3">
+                        <input type="hidden" id="editRecordId" value="">
+                        <div class="col-md-3"><label>Tarih</label><input type="date" id="inputTarih" class="form-control" required></div>
+                        <div class="col-md-5"><label>Açıklama</label><input type="text" id="inputAciklama" class="form-control" placeholder="Yapılan iş..." required></div>
+                        <div class="col-md-2"><label>Saat</label><input type="number" id="inputSaat" step="0.5" min="0" max="24" class="form-control" placeholder="8"></div>
+                        <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-success w-100"><i class="fas fa-save"></i></button></div>
+                        <div class="col-12"><div class="form-check"><input type="checkbox" id="inputResmiTatil" class="form-check-input"><label class="form-check-label" for="inputResmiTatil">Resmi Tatil</label></div></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card" id="recordsCard" style="display:none;">
+                <div class="card-header d-flex justify-content-between"><span><i class="fas fa-list"></i> Kayıtlar</span><button class="btn btn-light btn-sm" onclick="toggleEditMode()"><i class="fas fa-edit"></i></button></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead><tr><th>Gün</th><th>Açıklama</th><th>Saat</th><th class="edit-col" style="display:none;">İşlem</th></tr></thead>
+                            <tbody id="recordsList">
+                                <!-- Dinamik -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row g-3 p-3 bg-light" id="summaryContainer">
+                        <!-- Dinamik -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RAPORLAR EKRANI -->
+    <div id="view-reports" class="app-view">
+        <div class="top-nav">
+            <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar" id="reportAvatar">R</div>
+                <strong>Raporlar</strong>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" onclick="showView('main')"><i class="fas fa-arrow-left"></i> Geri</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calendar-week"></i> Hafta Raporu</div>
+            <div class="card-body">
+                <form id="weekReportForm" class="row g-3">
+                    <div class="col-md-9">
+                        <select id="reportWeekSelect" class="form-select" required>
+                            <option value="">Hafta seçin...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-file-alt"></i> Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calendar-alt"></i> Tarih Aralığı Raporu</div>
+            <div class="card-body">
+                <form id="rangeReportForm" class="row g-3">
+                    <div class="col-md-4"><label>Başlangıç</label><input type="date" id="rangeStart" class="form-control" required></div>
+                    <div class="col-md-4"><label>Bitiş</label><input type="date" id="rangeEnd" class="form-control" required></div>
+                    <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100"><i class="fas fa-file-alt"></i> Oluştur</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="reportResultCard" class="card" style="display:none;">
+            <div class="card-header bg-success" id="reportTitle"></div>
+            <div class="card-body">
+                <textarea id="raporText" class="form-control mb-3" rows="10" readonly></textarea>
+                <button type="button" class="btn btn-success" onclick="copyReport()"><i class="fas fa-copy"></i> Kopyala</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMİN PANELİ -->
+    <div id="view-admin" class="app-view">
+        <div class="top-nav">
+            <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar"><i class="fas fa-shield-alt"></i></div>
+                <strong>Admin Paneli</strong>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showView('main')"><i class="fas fa-arrow-left"></i> Geri</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-users"></i> Kullanıcılar</div>
+            <div class="card-body">
+                <input type="text" id="userSearch" class="form-control mb-3" placeholder="🔍 Ara...">
+                <div class="table-responsive">
+                    <table class="table" id="userTable">
+                        <thead><tr><th>Ad Soyad</th><th>Kullanıcı</th><th>Durum</th><th>İşlem</th></tr></thead>
+                        <tbody id="adminUserList">
+                            <!-- Dinamik -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal fade" id="editWeekModal"><div class="modal-dialog"><div class="modal-content">
+    <form id="editWeekForm">
+        <div class="modal-header"><h5>Hafta Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="mb-3"><label>Başlangıç Tarihi</label><input type="date" id="editWeekStart" class="form-control" required></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn btn-primary">Kaydet</button></div>
+    </form>
+</div></div></div>
+
+<div class="modal fade" id="settingsModal"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5><i class="fas fa-user-cog"></i> Ayarlar</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <form id="changePasswordForm">
+            <h6>Şifre Değiştir</h6>
+            <div class="mb-2"><input type="password" id="currentPassword" class="form-control" placeholder="Mevcut şifre" required></div>
+            <div class="mb-2"><input type="password" id="newPassword" class="form-control" placeholder="Yeni şifre" required></div>
+            <div class="mb-3"><input type="password" id="confirmNewPassword" class="form-control" placeholder="Yeni şifre tekrar" required></div>
+            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-key"></i> Değiştir</button>
+        </form>
+        <hr>
+        <h6>Bulut Yedekleme (Google Drive)</h6>
+        <p class="small text-muted">Verilerinizi Google hesabınıza yedekleyin veya geri yükleyin.</p>
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" onclick="Android.backupToCloud()"><i class="fas fa-cloud-upload-alt"></i> Buluta Yedekle</button>
+            <button class="btn btn-success" onclick="Android.restoreFromCloud()"><i class="fas fa-cloud-download-alt"></i> Buluttan Geri Yükle</button>
+        </div>
+    </div>
+</div></div></div>
+
+<div class="modal fade" id="editUserModal"><div class="modal-dialog"><div class="modal-content">
+    <form id="adminEditUserForm">
+        <div class="modal-header"><h5>Kullanıcı Düzenle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="adminEditUserId">
+            <div class="mb-3"><label>Ad Soyad</label><input type="text" id="adminEditAdSoyad" class="form-control" required></div>
+            <div class="mb-3"><label>Kullanıcı Adı</label><input type="text" id="adminEditUsername" class="form-control" required></div>
+            <div class="mb-3"><label>Yeni Şifre (Boş bırakılabilir)</label><input type="password" id="adminEditPassword" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button><button type="submit" class="btn btn-primary">Kaydet</button></div>
+    </form>
+</div></div></div>
+
+<footer>© <span id="currentYear"></span> Mesai Takip</footer>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
