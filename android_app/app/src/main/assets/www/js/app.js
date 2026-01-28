@@ -2,7 +2,7 @@
 const DB = {
     query: (sql, args = []) => {
         if (typeof Android !== 'undefined') {
-            const res = Android.query(sql, args);
+            const res = Android.query(sql, JSON.stringify(args));
             try { return JSON.parse(res); } catch(e) { return []; }
         }
         console.warn("Android interface not found. SQL:", sql, args);
@@ -10,7 +10,7 @@ const DB = {
     },
     execute: (sql, args = []) => {
         if (typeof Android !== 'undefined') {
-            return Android.execute(sql, args);
+            return Android.execute(sql, JSON.stringify(args));
         }
         console.warn("Android interface not found. SQL:", sql, args);
         return -1;
@@ -31,31 +31,36 @@ let selectedYear = new Date().getFullYear();
 let editMode = false;
 
 // Helpers
+function parseLocalDate(dateStr) {
+    const parts = dateStr.split('-');
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
 function formatTarih(dateStr) {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     return date.getDate() + ' ' + aylar[date.getMonth()];
 }
 
 function getGunAdi(dateStr, kisa = true) {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const gunler_kisa = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
     const gunler_uzun = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
     return kisa ? gunler_kisa[date.getDay()] : gunler_uzun[date.getDay()];
 }
 
 function isPazar(dateStr) {
-    return new Date(dateStr).getDay() === 0;
+    return parseLocalDate(dateStr).getDay() === 0;
 }
 
 function isHaftaSonu(dateStr) {
-    const day = new Date(dateStr).getDay();
+    const day = parseLocalDate(dateStr).getDay();
     return day === 0 || day === 6;
 }
 
 function createHaftaAraligi(startDateStr) {
-    const start = new Date(startDateStr);
+    const start = parseLocalDate(startDateStr);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
@@ -146,6 +151,43 @@ function logout() {
     currentWeek = null;
     showView('auth');
 }
+
+function googleLogin() {
+    if (typeof Android !== 'undefined') {
+        Android.googleLogin();
+    } else {
+        alert("Android arayüzü bulunamadı.");
+    }
+}
+
+window.onGoogleLoginSuccess = function(email, displayName, googleId) {
+    // Google ile giriş yapan kullanıcıyı yerel DB'de kontrol et veya oluştur
+    let users = DB.query("SELECT * FROM kullanicilar WHERE username = ?", [email]);
+    let userId;
+
+    if (users.length === 0) {
+        userId = DB.execute("INSERT INTO kullanicilar (adsoyad, username, password, is_admin) VALUES (?, ?, ?, 0)",
+            [displayName, email, googleId]);
+        currentUser = { id: userId, adsoyad: displayName, username: email, is_admin: 0 };
+    } else {
+        const user = users[0];
+        if (user.is_banned) {
+            setMessage("Bu hesap engellenmiştir.");
+            return;
+        }
+        userId = user.id;
+        currentUser = user;
+    }
+
+    localStorage.setItem('userId', userId);
+    showView('main');
+    loadMain();
+    setMessage("Google ile giriş başarılı!", "success");
+};
+
+window.onGoogleLoginFailure = function(statusCode) {
+    setMessage("Google girişi başarısız. Hata kodu: " + statusCode);
+};
 
 // View Management
 function showView(viewName) {
