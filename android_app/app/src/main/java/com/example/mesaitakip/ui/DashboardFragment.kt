@@ -88,7 +88,7 @@ class DashboardFragment : Fragment() {
     private fun addNewWeek(userId: Int, fullName: String) {
         val monday = DateUtils.getMondayOfCurrentWeek()
         val week = Week(
-            hafta_baslangic = DateUtils.formatDate(monday),
+            hafta_baslangic = DateUtils.formatDateForDb(monday),
             hafta_araligi = DateUtils.getWeekRangeString(monday),
             calisan_adi = fullName,
             user_id = userId
@@ -101,7 +101,7 @@ class DashboardFragment : Fragment() {
             for (i in 0..6) {
                 records.add(OvertimeRecord(
                     hafta_id = weekId.toInt(),
-                    tarih = DateUtils.formatDate(cal),
+                    tarih = DateUtils.formatDateForDb(cal),
                     aciklama = "",
                     saat = "0",
                     is_resmi_tatil = if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) 1 else 0

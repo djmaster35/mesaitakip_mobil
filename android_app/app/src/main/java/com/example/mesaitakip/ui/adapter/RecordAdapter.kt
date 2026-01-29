@@ -14,7 +14,7 @@ class RecordAdapter(
 
     class RecordViewHolder(private val binding: ItemRecordBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(record: OvertimeRecord, onSaveClicked: (OvertimeRecord) -> Unit) {
-            binding.tvDate.text = record.tarih
+            binding.tvDate.text = com.example.mesaitakip.util.DateUtils.formatDateForDisplay(record.tarih)
             binding.etHours.setText(record.saat)
             binding.etDescription.setText(record.aciklama)
             binding.cbIsHoliday.isChecked = record.is_resmi_tatil == 1

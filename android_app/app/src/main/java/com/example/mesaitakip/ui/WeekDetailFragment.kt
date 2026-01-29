@@ -71,7 +71,8 @@ class WeekDetailFragment : Fragment() {
             } else {
                 totalNormal += hours
             }
-            report.append("${record.tarih}: ${record.saat} Saat")
+            val displayDate = com.example.mesaitakip.util.DateUtils.formatDateForDisplay(record.tarih)
+            report.append("${displayDate}: ${record.saat} Saat")
             if (record.is_resmi_tatil == 1) report.append(" (Tatil)")
             if (record.aciklama.isNotEmpty()) report.append(" - ${record.aciklama}")
             report.append("\n")

@@ -4,7 +4,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object DateUtils {
-    private val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+    private val dbFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    private val displayFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
 
     fun getMondayOfCurrentWeek(): Calendar {
         val cal = Calendar.getInstance()
@@ -18,13 +19,22 @@ object DateUtils {
         return cal
     }
 
-    fun formatDate(calendar: Calendar): String {
-        return dateFormat.format(calendar.time)
+    fun formatDateForDb(calendar: Calendar): String {
+        return dbFormat.format(calendar.time)
+    }
+
+    fun formatDateForDisplay(dbDate: String): String {
+        return try {
+            val date = dbFormat.parse(dbDate)
+            displayFormat.format(date!!)
+        } catch (e: Exception) {
+            dbDate
+        }
     }
 
     fun getWeekRangeString(monday: Calendar): String {
         val sunday = monday.clone() as Calendar
         sunday.add(Calendar.DAY_OF_YEAR, 6)
-        return "${formatDate(monday)} - ${formatDate(sunday)}"
+        return "${displayFormat.format(monday.time)} - ${displayFormat.format(sunday.time)}"
     }
 }
